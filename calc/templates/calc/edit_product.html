@@ -1,0 +1,74 @@
+{% extends 'calc/layout.html' %}
+{% load custom_tags %}
+{% block content %}
+<form id="edit-product-form">
+    {% csrf_token %}
+    <table class="table align-middle mb-0 bg-white">
+        <thead class="bg-light">
+            <tr>
+                <th>Номер</th>
+                <th>Артикул</th>
+                <th>Назва продукції.</th>
+                <th>Кіл-сть</th>
+                <th>Знижка</th>
+            </tr>
+        </thead>
+        <tbody id="product-table-body">
+            {% for product in products %}
+                <tr data-pk={{ product.pk }}>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ product.article }}</td>
+                    <td>
+                        <div class="input-group">
+                            <input class="form-control d-block px-2 filter-input-change product-title" list="products-options"
+                                   placeholder="Виберіть назву" name="products-search" value="{{ product.title }}">
+                        </div>
+                        <datalist id="products-options">
+                            {% for option in product_options %}
+                                <option value="{{ option }}">{{ option }}</option>
+                            {% endfor %}
+                        </datalist>
+                    </td>
+                    <td>
+                        <div class="form-outline">
+                            <input type="number" class="product-count form-control" name="count"
+                                   value="{{ product.count }}"/>
+                            <label class="form-label">Введіть кількість</label>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="form-outline">
+                            <input type="number" class="form-control product-discount" name="discount"
+                                   value="{{ product.discount|replace_coma }}" step=".01"/>
+                            <label class="form-label">Введіть знижку</label>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="col mt-3">
+        <button class="btn btn-primary" type="button" id="add-product">Додати рядок</button>
+        <button class="btn btn-primary" type="button" id="submit-changes">Розрахувати</button>
+    </div>
+</form>
+
+{#<form id="edit-product-form">#}
+{#  {% csrf_token %}#}
+{#  <div id="products-container">#}
+{#    {% for product in products %}#}
+{#      <div class="product row" data-pk="{{ product.pk }}">#}
+{#        <input class="title form-control col" type="text" value="{{ product.title }}">#}
+{#        - Count:#}
+{#        <input class="count form-control col" type="text" value="{{ product.count }}">#}
+{#        - Discount:#}
+{#        <input class="discount form-control col" type="text" value="{{ product.discount }}">#}
+{#      </div>#}
+{#    {% endfor %}#}
+{#  </div>#}
+{#  <button type="button" id="add-product">Add Product</button>#}
+{#  <button type="button" id="submit-changes">Submit</button>#}
+{#</form>#}
+
+
+{% endblock %}

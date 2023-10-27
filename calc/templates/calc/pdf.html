@@ -1,0 +1,10 @@
+{% extends 'calc/layout.html' %}
+{% load custom_tags %}
+{% block content %}
+    <div class="" id="templatePDF">
+        <div class="d-flex flex-row justify-content-between">
+            <div class="p-2">Від {% now "d" %} {% now "m" as month %} {{ month|format_date }} {% now "Y" %} р.</div>
+            <div class="p-2">Назва організації</div>
+        </div>
+    </div>
+{% endblock %}

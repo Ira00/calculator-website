@@ -1,0 +1,322 @@
+{% extends 'calc/layout.html' %}
+{% load custom_tags %}
+{% load mathfilters %}
+{% block content %}
+
+    <form class="col" id="edit-product-form" method="post">
+        {% csrf_token %}
+        <div class="row mt-5">
+            <div class="col-md-3 col-12">
+                <h3>
+                    Калькулятор для розрахунку комерційної пропозиції
+                </h3>
+            </div>
+            <div class="col">
+                <div class="row" id="main-settings">
+                    <div class="col">
+                        <div class="form-outline">
+                            <input type="number" step="0.01" id="costPDV" class="form-control" name="costPDV"
+                                   value="{{ project.cost_PDV }}"/>
+                            <label class="form-label" for="costPDV">Вартість рейсу з ПДВ (вручну)</label>
+                        </div>
+                        <div class="form-outline mt-3">
+                            <input type="number" step="0.01" id="countTrip" class="form-control" name="countTrip"
+                                   value="{{ project.count_trip }}"/>
+                            <label class="form-label" for="countTrip">Кількість рейсів</label>
+                        </div>
+                        <div class="mt-3">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="inlineRadioOptionsDeliveryIn"
+                                       id="inlineRadioDeliveryIn1"
+                                       value="deliveryIn"
+                                       {% if project.delivery_where %}
+                                       {% if project.delivery_where == "deliveryIn" %}checked{% endif %}
+                                       {% elif deliveryWhere == "deliveryIn" %}checked{% endif %}
+                                />
+                                <label class="form-check-label" for="inlineRadioDeliveryIn1">Доставка в ціні</label>
+                            </div>
+
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="inlineRadioOptionsDeliveryIn"
+                                       id="inlineRadioDeliveryIn2"
+                                       value="deliveryOut"
+                                       {% if project.delivery_where %}
+                                       {% if project.delivery_where == "deliveryOut" %}checked{% endif %}
+                                       {% elif deliveryWhere == "deliveryOut" %}checked{% endif %}
+                                />
+                                <label class="form-check-label" for="inlineRadioDeliveryIn2">Доставка окремо</label>
+                            </div>
+
+                        </div>
+                        <div class="">
+                            <div class="input-group">
+                                <input class="form-control d-block px-2 filter-input-change guide-title"
+                                       id="guide-title"
+                                       list="guide-options"
+                                       placeholder="Виберіть реквізити" name="guide-search" value="{{ project.guide_option }}">
+                            </div>
+                            <datalist id="guide-options">
+                                {% for option in guide_options %}
+                                    <option data-value="{{ option }}">{{ option }}</option>
+                                {% endfor %}
+                            </datalist>
+                        </div>
+
+                    </div>
+
+                    <div class="col">
+                        <div class="form-outline">
+                            <input type="text" id="distance" class="form-control" name="distance"
+                                   value="{{ project.distance }}"/>
+                            <label class="form-label" for="distance">Відстань, км</label>
+                        </div>
+                        <div class="form-outline mt-3">
+                            <input type="text" id="tn_per_trip" class="form-control" name="tn_per_trip"
+                                   value="{{ project.tn_per_trip }}"/>
+                            <label class="form-label" for="tn_per_trip">ТН/рейс</label>
+                        </div>
+                        <div class="mt-3">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="inlineRadioOptionsDelivery"
+                                       id="inlineRadioDeliveryWithout"
+                                       value="deliveryWithout"
+                                       {% if project.is_delivery %}
+                                       {% if project.is_delivery == "deliveryWithout" %}checked{% endif %}
+                                       {% elif isDelivery == "deliveryWithout" %}checked{% endif %}
+                                />
+                                <label class="form-check-label" for="inlineRadioDeliveryWithout">Без Доставки</label>
+                            </div>
+
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="inlineRadioOptionsDelivery"
+                                       id="inlineRadioDeliveryWith"
+                                       value="deliveryWith"
+                                       {% if project.is_delivery %}
+                                       {% if project.is_delivery == "deliveryWith" %}checked{% endif %}
+                                       {% elif isDelivery == 'deliveryWith' %}checked{% endif %}
+                                />
+                                <label class="form-check-label" for="inlineRadioDeliveryWith">З Доставкою</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {#        <div class="">#}
+        {#            {{ costPDV }}#}
+        {#            {{ countTrip }}#}
+        {#            {{ deliveryWhere }}#}
+        {#            {{ distance }}#}
+        {#            {{ tn_per_trip }}#}
+        {#            {{ isDelivery }}#}
+        {#        </div>#}
+        {#        <div class="">#}
+        {#            {{ products }}#}
+        {#        </div>#}
+        <div id="template-header">
+            {% if project.guide_option %}
+                {% get_nested_value guide project.guide_option 'receiver' as receiver %}
+                {% if receiver|stringformat:"s" != "nan" %}
+                    <div class="p-2">Отримувач: <strong> {{ receiver }}</strong></div>
+                {% endif %}
+                {% get_nested_value guide project.guide_option 'code' as code %}
+                {% if code|stringformat:"s" != "nan" %}
+                    <div class="p-2">Код: <strong>{{ code }}</strong></div>
+                {% endif %}
+                {% get_nested_value guide project.guide_option 'bank' as bank %}
+                {% get_nested_value guide project.guide_option 'account' as account %}
+                {% if bank|stringformat:"s" != "nan" and account|stringformat:"s" != "nan" %}
+                    <div class="d-flex flex-row justify-content-between">
+                        <div class="p-2">Банк отримувача: <br>
+                            <strong> {{ bank }}</strong></div>
+                        <div class="p-2">КРЕДИТ рах. № <br>
+                            <strong> {{ account }}</strong>
+                        </div>
+                    </div>
+                {% endif %}
+                {% get_nested_value guide project.guide_option 'receiver' as receiver %}
+                {% if receiver|stringformat:"s" != "nan" %}
+                    <div class="d-flex justify-content-start">
+                        <div class="p-2"><strong><u>Постачальник:</u></strong></div>
+                        <div class="p-2"><strong> {{ receiver }}</strong>
+                            {% get_nested_value guide project.guide_option 'details' as details %}
+                            {% if details|stringformat:"s" != "nan" %}
+                                <br><strong>{{ details }}</strong>
+                            {% endif %}
+                            {% get_nested_value guide project.guide_option 'address' as address %}
+                            {% if address|stringformat:"s" != "nan" %}
+                                <br><strong>{{ address }}</strong>
+                            {% endif %}
+                            {% get_nested_value guide project.guide_option 'edrpou' as edrpou %}
+                            {% if edrpou|stringformat:"s" != "nan" %}
+                                <br><strong>{{ edrpou }}</strong>
+                            {% endif %}
+
+                        </div>
+
+                    </div>
+
+                {% endif %}
+                <div class="p-2">{% now "d" %} {% now "m" as month %} {{ month|format_date }} {% now "Y" %} р.</div>
+                <div class="p-2"><strong><u>Покупець: </u></strong></div>
+                <h5 class="text-center">Рахунок №</h5>
+                <div class="p-2"><strong><u>Об'єкт: </u></strong></div>
+
+            {% else %}
+                <div class="p-2">{% now "d" %} {% now "m" as month %} {{ month|format_date }} {% now "Y" %} р.</div>
+                <div class="p-2"><strong><u>Покупець: </u></strong></div>
+                <h5 class="text-center">Комерційна пропозиція №</h5>
+                <div class="p-2"><strong><u>Об'єкт: </u></strong></div>
+
+            {% endif %}
+        </div>
+
+        <div class="overflow-scroll">
+            <table class="table align-middle mb-0 bg-white mt-3" id="productsTable">
+
+                <thead class="bg-light">
+                <tr>
+                    <th>№</th>
+                    <th>Артикул</th>
+                    <th>Назва продукції.</th>
+                    <th>Кількість</th>
+                    <th>Вага 1 шт, т</th>
+                    <th>Вага всього шт, т</th>
+                    <th>Знижка</th>
+                    <th>Ціна за 1 шт.</th>
+                    <th>Сума до сплати (грн)</th>
+                    <th>Сума до сплати зі знижкою (грн)</th>
+                    <th></th>
+                </tr>
+                </thead>
+                <tbody id="product-table-body">
+                {% if products %}
+                    {% for product in products %}
+                        <tr data-pk={{ product.pk }}>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ product.article }}</td>
+                            <td>
+                                <div class="input-group">
+                                    <input class="form-control d-block px-2 filter-input-change product-title"
+                                           list="products-options"
+                                           placeholder="Виберіть назву" name="products-search"
+                                           value="{{ product.title }}">
+                                </div>
+                                <datalist id="products-options">
+                                    {% for option in product_options %}
+                                        <option data-value="{{ option }}">{{ option }}</option>
+                                    {% endfor %}
+                                </datalist>
+                                {#                        <select class="form-select d-block px-2 filter-input-change product-title"#}
+                                {#                                name="products-search" id="selectTitle">#}
+                                {#                            <option value="{{ product.title }}" disabled selected>{{ product.title }}</option>#}
+                                {#                            {% for option in product_options %}#}
+                                {#                                <option value="{{ option }}">{{ option }}</option>#}
+                                {#                            {% endfor %}#}
+                                {#                        </select>#}
+                            </td>
+                            <td>
+                                <div class="form-outline">
+                                    <input required type="number" class="product-count form-control" name="count"
+                                           value="{{ product.count }}"/>
+                                    <label class="form-label">Введіть кількість</label>
+                                </div>
+                            </td>
+                            <td>
+                                {% get_nested_value db product.title 'weight' as local_weight %} {{ local_weight }}
+                            </td>
+                            <td class="general-weight">
+                                {% get_nested_value db product.title 'weight' as general_weight %} {{ general_weight|mul:product.count|floatformat:2 }}
+                            </td>
+
+                            <td>
+                                <div class="form-outline">
+                                    <input type="number" class="form-control product-discount" name="discount"
+                                           value="{{ product.discount|replace_coma }}" step=".01"/>
+                                    <label class="form-label">Введіть знижку</label>
+                                </div>
+                            </td>
+                            <td class="local-price">
+                                {% get_nested_value db product.title 'price' as local_price %}{% if local_price %}
+                                    {{ local_price|format_currency }}{% endif %}</td>
+                            <td class="general-price">
+                                {% get_nested_value db product.title 'price' as result_price %}{% if result_price %}
+                                    {{ result_price|mul:product.count|format_currency }}{% endif %}</td>
+                            <td class="general-price-discount">
+                                {% get_nested_value db product.title 'price' as result_price %}{% get_sum_with_discount result_price|mul:product.count product.discount|replace_coma as sum_with_disc %}
+                                        {% if sum_with_disc %}{{ sum_with_disc|format_currency }}{% endif %}
+                            </td>
+                            <td>
+                                <button type="button" class="btn btn-danger delete-product">Видалити</button>
+                            </td>
+
+                        </tr>
+                    {% endfor %}
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td id="general-total-weight-sum"></td>
+                        <td></td>
+                        <td id="local-total-sum"></td>
+                        <td id="general-total-sum"></td>
+                        <td id="general-total-sum-discount"></td>
+                        <td></td>
+                    </tr>
+                {% else %}
+                    <tr data-pk="">
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <div class="input-group">
+                                <input class="form-control d-block px-2 filter-input-change product-title"
+                                       list="products-options"
+                                       placeholder="Виберіть назву" name="products-search" value="{{ product.title }}">
+                            </div>
+                            <datalist id="products-options">
+                                {% for option in product_options %}
+                                    <option data-value="{{ option }}">{{ option }}</option>
+                                {% endfor %}
+                            </datalist>
+                        </td>
+                        <td>
+                            <div class="form-outline">
+                                <input required type="number" class="product-count form-control" name="count"/>
+                                <label class="form-label">Введіть кількість</label>
+                            </div>
+                        </td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <div class="form-outline">
+                                <input type="number" class="form-control product-discount" name="discount" step=".01"/>
+                                <label class="form-label">Введіть знижку</label>
+                            </div>
+                        </td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+
+                    </tr>
+                {% endif %}
+                </tbody>
+
+            </table>
+        </div>
+
+        <div class="col mt-3">
+            <button class="btn btn-primary" type="button" id="add-product">Додати рядок</button>
+            <button class="btn btn-primary" type="button" id="submit-changes">Розрахувати</button>
+        </div>
+    </form>
+    <div class="d-flex flex-row-reverse mt-3" id="totalDeliveryBlock">
+        <h3 id="totalDelivery">
+            {#            Всього до сплати {% if isDelivery == "deliveryWith" %} з доставкою:  {% elif isDelivery == "deliveryWithout" %} БЕЗ доставки: {% endif %}#}
+        </h3>
+    </div>
+
+    <a id="sendRequestButton" class="btn btn-primary">Завантажити PDF</a>
+{% endblock %}
